@@ -1,7 +1,7 @@
 #CODIGO DE ZVEZDA
 # Jaime Forero, Nicolas Rocha
 #Test para git
-
+#segundo test
 
 #Importa las librerias necesarias para analizar la imagen
 import numpy as np
