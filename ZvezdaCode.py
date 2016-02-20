@@ -36,7 +36,7 @@ def autovalores( matriz_derivadas ):
 
 
 #Guarda los valores de la imagen en una matriz
-hdulist  = fits.open("bbso_tio_pcosr_20130902_162238.fts")
+hdulist  = fits.open("./data/bbso_tio_pcosr_20130902_162238.fts")
 image_data = hdulist[0].data
 print ""
 print "La imagen ha sido cargada"
@@ -92,33 +92,28 @@ plt.imshow( graph , cmap = 'gray' )
 plt.title( umbral )
 plt.colorbar()
 plt.show()
-#	stUmbral = input("Ingrese el umbral: ")
 
 
-print autovalores_matriz[0,0,:]
+hist_auto1,binsauto1 = np.histogram( autovalores_matriz[:,:,0] , bins = 50 )
+hist_auto2,binsauto2 = np.histogram( autovalores_matriz[:,:,1] , bins = 50 )
 
-#Hacer histogramas con los lambdas (autovalores)
-#Histograma del primer autovalor
+centros_1 = 0.5*( binsauto1[1:]+binsauto1[0:-1] )
+centros_2 = 0.5*( binsauto2[1:]+binsauto2[0:-1] )
 
-#Esto no calcula los histogramas como deberia
-hist_auto1,binsauto1 = np.histogram( autovalores_matriz[:,:,0] , bins=50 )
 
-print hist_auto1
-
-#Calculo del histograma arroja lo siguiente:
-
-centros = 0.5*( binsauto1[1:]+binsauto1[0:-1] )
-
-#Esto deberia graficar los autovalores
-plt.plot( centros , np.log10( hist_auto1 + 1 ) )
-#plt.title( "Histograma primer autovalor" )
-#plt.colorbar()
+plt.plot( centros_1 , np.log10( hist_auto1 + 1 ) )
 plt.show()
 
+plt.plot( centros_2 , np.log10( hist_auto2 + 1 ) )
+plt.show()
 
+hist2D, bins2DX , bins2DY = np.histogramdd( [ autovalores_matriz[:,:,0] , autovalores_matriz[:,:,1] ] , bins=50 )
 
+print hist2D
 
-
+plt.hexbin( ) 
+plt.colorbar()
+plt.show()
 
 
 
