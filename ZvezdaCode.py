@@ -41,7 +41,7 @@ image_data = hdulist[0].data
 print ""
 print "La imagen ha sido cargada"
 
-plt.imshow( image_data )
+plt.imshow( image_data , cmap='gray' )
 plt.show()
 
 
@@ -59,7 +59,8 @@ new_image_data = 1.0*image_data[ 1500:-100 , 1500:-100 ]
 final_image_data = new_image_data[1:-1,1:-1]
 
 
-plt.imshow( final_image_data )
+plt.imshow( final_image_data , cmap='gray' )
+plt.title("Image to be analyzed")
 plt.show()
 
 
@@ -70,6 +71,14 @@ print "La derivada ha sido calculada"
 autovalores_matriz = autovalores(derivada_matriz);
 print "los autovectores han sido calculados"
 print ""
+
+plt.imshow( autovalores_matriz[:,:,0] , cmap='gray' )
+plt.title( "First eigenvalues" )
+plt.show()
+
+plt.imshow( autovalores_matriz[:,:,1] , cmap='gray' )
+plt.title( "Second eigenvalues" )
+plt.show()
 
 
 #Graficamos los autovalores bajo ciertas condiciones
