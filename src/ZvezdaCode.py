@@ -36,7 +36,7 @@ def autovalores( matriz_derivadas ):
 
 
 #Guarda los valores de la imagen en una matriz
-hdulist  = fits.open("./data/bbso_tio_pcosr_20130902_162238.fts")
+hdulist  = fits.open("../data/obs/bbso_halph_fl_20130912_231121.fts")
 image_data = hdulist[0].data
 print ""
 print "La imagen ha sido cargada"
@@ -55,14 +55,13 @@ print(image_data.shape)
 print ""
 
 #cortamos el pedazo que necesitamos
-new_image_data = 1.0*image_data[ 1500:-100 , 1500:-100 ]
+new_image_data = 1.0*image_data[ 100:-100 , 100:-100 ]
 final_image_data = new_image_data[1:-1,1:-1]
 
 
 plt.imshow( final_image_data , cmap='gray' )
 plt.title("Image to be analyzed")
 plt.show()
-
 
 #Calculamos la matriz asociada al algoritmo
 derivada_matriz = hessiano(new_image_data)
@@ -80,12 +79,15 @@ plt.imshow( autovalores_matriz[:,:,1] , cmap='gray' )
 plt.title( "Second eigenvalues" )
 plt.show()
 
+dimension = len( autovalores_matriz )
+print "Dimension de los autovalores: " + str(dimension)
+
 
 #Graficamos los autovalores bajo ciertas condiciones
-graph = np.zeros( ( 441 , 441 ) )
+graph = np.zeros( ( dimension , dimension ) )
 umbral = int(100)
-for x in range( 0 , 441 ):
-	for y in range( 0 , 441 ):
+for x in range( 0 , dimension ):
+	for y in range( 0 , dimension ):
 		if( (autovalores_matriz[ x , y , 1 ] < umbral ) and ( autovalores_matriz[ x , y , 0 ] > umbral ) ):
 			graph[x][y] = 1
 
