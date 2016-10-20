@@ -36,13 +36,10 @@ def autovalores( matriz_derivadas ):
 
 
 #Guarda los valores de la imagen en una matriz
-hdulist  = fits.open("../data/obs/bbso_halph_fl_20130912_231121.fts")
+hdulist  = fits.open("../data/obs/bbso_tio_pcosr_20130902_162238.fts")
 image_data = hdulist[0].data
 print ""
 print "La imagen ha sido cargada"
-
-plt.imshow( image_data , cmap='gray' )
-plt.show()
 
 
 #Imprime informacion de la imagen que se cargo
@@ -55,43 +52,80 @@ print(image_data.shape)
 print ""
 
 #cortamos el pedazo que necesitamos
-new_image_data = 1.0*image_data[ 100:-100 , 100:-100 ]
+new_image_data = 1.0*image_data[ 500:-500 , 500:-500 ]
 final_image_data = new_image_data[1:-1,1:-1]
 
-
-plt.imshow( final_image_data , cmap='gray' )
-plt.title("Image to be analyzed")
-plt.show()
 
 #Calculamos la matriz asociada al algoritmo
 derivada_matriz = hessiano(new_image_data)
 print "La derivada ha sido calculada"
 
+
 autovalores_matriz = autovalores(derivada_matriz);
 print "los autovectores han sido calculados"
 print ""
 
+plt.figure(figsize=(15,10))
+plt.subplot(131)
+plt.imshow( final_image_data , cmap='gray' )
+plt.title("Image to be analyzed")
+plt.colorbar()
+plt.subplot(132)
 plt.imshow( autovalores_matriz[:,:,0] , cmap='gray' )
 plt.title( "First eigenvalues" )
-plt.show()
-
+plt.colorbar()
+plt.subplot(133)
 plt.imshow( autovalores_matriz[:,:,1] , cmap='gray' )
 plt.title( "Second eigenvalues" )
+plt.colorbar()
 plt.show()
+
+
 
 dimension = len( autovalores_matriz )
 print "Dimension de los autovalores: " + str(dimension)
 
 
 #Graficamos los autovalores bajo ciertas condiciones
-graph = np.zeros( ( dimension , dimension ) )
-umbral = int(100)
+graph_positive = np.zeros( ( dimension , dimension ) )
+graph_negative = np.zeros( ( dimension , dimension ) )
+graph_difffp = np.zeros( ( dimension , dimension ) )
+graph_diffsp = np.zeros( ( dimension , dimension ) )
+
+
+
+umbral = int(input("Umbral para la imagen: "))
+
 for x in range( 0 , dimension ):
 	for y in range( 0 , dimension ):
-		if( (autovalores_matriz[ x , y , 1 ] < umbral ) and ( autovalores_matriz[ x , y , 0 ] > umbral ) ):
-			graph[x][y] = 1
+		if( ( autovalores_matriz[ x , y , 1 ] > umbral ) and ( autovalores_matriz[ x , y , 0 ] > umbral ) ):
+			graph_positive[ x , y ] = 1
 
-plt.imshow( graph )
+		if( ( autovalores_matriz[ x , y , 1 ] < umbral ) and ( autovalores_matriz[ x , y , 0 ] < umbral ) ):
+			graph_negative[ x , y ] = 1
+
+		if( ( autovalores_matriz[ x , y , 1 ] > umbral ) and ( autovalores_matriz[ x , y , 0 ] < umbral ) ):
+			graph_difffp[ x , y ] = 1
+
+		if( ( autovalores_matriz[ x , y , 1 ] < umbral ) and ( autovalores_matriz[ x , y , 0 ] > umbral ) ):
+			graph_diffsp[ x , y ] = 1
+
+plt.figure(figsize=(15,10))
+plt.subplot(231)
+plt.imshow( graph_positive , cmap='gray' )
+plt.title("Valores propios positivos")
+plt.subplot(232)
+plt.imshow( graph_negative , cmap='gray' )
+plt.title("Valores propios negativos")
+plt.subplot(233)
+plt.imshow( graph_difffp , cmap='gray' )
+plt.title("Valores propios distintos, primero positivo")
+plt.subplot(234)
+plt.imshow( graph_diffsp , cmap='gray' )
+plt.title("Valores propios distintos, segundo positivo")
+plt.subplot(235)
+plt.imshow( final_image_data , cmap='gray' )
+plt.title("imagen")
 plt.show()
 
 
@@ -112,9 +146,9 @@ plt.show()
 ntot = np.prod(np.shape(autovalores_matriz[:,:,0]))
 
 #histogramas
-hist2D, bins2DX , bins2DY= np.histogram2d(np.reshape(autovalores_matriz[:,:,0],ntot) , np.reshape(autovalores_matriz[:,:,1], ntot))
+hist2D, bins2DX , bins2DY = np.histogram2d(np.reshape(autovalores_matriz[:,:,0],ntot) , np.reshape(autovalores_matriz[:,:,1], ntot))
 
-fig = plt.figure(figsize=(10, 10))
+fig = plt.figure()
 ax = fig.add_subplot(111)
 im = mpl.image.NonUniformImage(ax, interpolation='bilinear')
 xcenters = 0.5*( bins2DX[1:] + bins2DX[0:-1] )
