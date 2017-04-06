@@ -7,6 +7,8 @@ from astropy.io import fits
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from matplotlib.widgets import Slider
+
 
 
 #Definimos la funcion que crea la matriz de matrices para ejecutar el algoritmo
@@ -52,7 +54,7 @@ print(image_data.shape)
 print ""
 
 #cortamos el pedazo que necesitamos
-new_image_data = 1.0*image_data[ 500:-500 , 500:-500 ]
+new_image_data = 1.0*image_data[ 1500:-100, 1500:-100 ]
 final_image_data = new_image_data[1:-1,1:-1]
 
 
@@ -89,80 +91,64 @@ print "Dimension de los autovalores: " + str(dimension)
 #Graficamos los autovalores bajo ciertas condiciones
 graph_positive = np.zeros( ( dimension , dimension ) )
 graph_negative = np.zeros( ( dimension , dimension ) )
-graph_difffp = np.zeros( ( dimension , dimension ) )
 graph_diffsp = np.zeros( ( dimension , dimension ) )
 
+b=100
+#Halla los histogramas de cada autovalor
+hist_auto1,binsauto1 = np.histogram( autovalores_matriz[:,:,0] , bins = b )
+hist_auto2,binsauto2 = np.histogram( autovalores_matriz[:,:,1] , bins = b )
+plt.plot(binsauto1[1:],hist_auto1 )
+plt.plot(binsauto2[1:],hist_auto2 )
+plt.show()
 
+#
+def umbra(umbral):
+        for x in range( 0 , dimension ):
+	        for y in range( 0 , dimension ):
+		        if( ( autovalores_matriz[ x , y , 1 ] > umbral ) and ( autovalores_matriz[ x , y , 0 ] > umbral ) ):
+			        graph_positive[ x , y ] = 1
 
-umbral = int(input("Umbral para la imagen: "))
+		        if( ( autovalores_matriz[ x , y , 1 ] < umbral ) and ( autovalores_matriz[ x , y , 0 ] < umbral ) ):
+			        graph_negative[ x , y ] = 1
 
-for x in range( 0 , dimension ):
-	for y in range( 0 , dimension ):
-		if( ( autovalores_matriz[ x , y , 1 ] > umbral ) and ( autovalores_matriz[ x , y , 0 ] > umbral ) ):
-			graph_positive[ x , y ] = 1
+		        if( ( autovalores_matriz[ x , y , 1 ] < umbral ) and ( autovalores_matriz[ x , y , 0 ] > umbral ) ):
+			        graph_diffsp[ x , y ] = 1
 
-		if( ( autovalores_matriz[ x , y , 1 ] < umbral ) and ( autovalores_matriz[ x , y , 0 ] < umbral ) ):
-			graph_negative[ x , y ] = 1
+fig, ax=plt.subplots()
+plt.subplots_adjust(left=0.25, bottom=0.25)
 
-		if( ( autovalores_matriz[ x , y , 1 ] > umbral ) and ( autovalores_matriz[ x , y , 0 ] < umbral ) ):
-			graph_difffp[ x , y ] = 1
+umbral = float(input("Umbral posible para la imagen: "))
+ui = float(input("Umbral minimo: "))
+uf = float(input("Umbral maximo: "))
 
-		if( ( autovalores_matriz[ x , y , 1 ] < umbral ) and ( autovalores_matriz[ x , y , 0 ] > umbral ) ):
-			graph_diffsp[ x , y ] = 1
+umbra(umbral)
 
-plt.figure(figsize=(15,10))
-plt.subplot(231)
-plt.imshow( graph_positive , cmap='gray' )
-plt.title("Valores propios positivos")
-plt.subplot(232)
-plt.imshow( graph_negative , cmap='gray' )
-plt.title("Valores propios negativos")
-plt.subplot(233)
-plt.imshow( graph_difffp , cmap='gray' )
-plt.title("Valores propios distintos, primero positivo")
-plt.subplot(234)
-plt.imshow( graph_diffsp , cmap='gray' )
-plt.title("Valores propios distintos, segundo positivo")
-plt.subplot(235)
-plt.imshow( final_image_data , cmap='gray' )
+plt.subplot(221)
+g1=plt.imshow( graph_positive , cmap='gray' )
+plt.title("$\lambda_{1}$ > $\lambda_{u}$ y $\lambda_{2}$ > $\lambda_{u}$")
+
+plt.subplot(222)
+g2=plt.imshow( graph_negative , cmap='gray' )
+plt.title("$\lambda_{1}$ < $\lambda_{u}$ y $\lambda_{2}$ < $\lambda_{u}$")
+
+plt.subplot(223)
+g3=plt.imshow( graph_diffsp , cmap='gray' )
+plt.title("$\lambda_{1}$ > $\lambda_{u}$ y $\lambda_{2}$ < $\lambda_{u}$")
+
+plt.subplot(224)
+g4=plt.imshow( final_image_data , cmap='gray' )
 plt.title("imagen")
+
+axlu = plt.axes([0.25, 0.1, 0.65, 0.03])
+slu=Slider(axlu,'$\lambda_{u}$',ui,uf,valinit=umbral)
+
+def update(val):
+        lu=slu.val
+        umbra(lu)
+        g1.set_data(graph_positive)
+        g2.set_data(graph_negative)
+        g3.set_data(graph_diffsp)
+        fig.canvas.draw_idle()
+slu.on_changed(update)
+
 plt.show()
-
-
-hist_auto1,binsauto1 = np.histogram( autovalores_matriz[:,:,0] , bins = 50 )
-hist_auto2,binsauto2 = np.histogram( autovalores_matriz[:,:,1] , bins = 50 )
-
-centros_1 = 0.5*( binsauto1[1:]+binsauto1[0:-1] )
-centros_2 = 0.5*( binsauto2[1:]+binsauto2[0:-1] )
-
-
-plt.plot( centros_1 , np.log10( hist_auto1 + 1 ) )
-plt.show()
-
-plt.plot( centros_2 , np.log10( hist_auto2 + 1 ) )
-plt.show()
-
-
-ntot = np.prod(np.shape(autovalores_matriz[:,:,0]))
-
-#histogramas
-hist2D, bins2DX , bins2DY = np.histogram2d(np.reshape(autovalores_matriz[:,:,0],ntot) , np.reshape(autovalores_matriz[:,:,1], ntot))
-
-fig = plt.figure()
-ax = fig.add_subplot(111)
-im = mpl.image.NonUniformImage(ax, interpolation='bilinear')
-xcenters = 0.5*( bins2DX[1:] + bins2DX[0:-1] )
-ycenters = 0.5*( bins2DY[1:] + bins2DY[0:-1] )
-im.set_data(xcenters, ycenters, hist2D)
-ax.images.append(im)
-ax.set_xlim( bins2DX[0], bins2DX[-1])
-ax.set_ylim( bins2DY[0], bins2DY[-1])
-ax.set_aspect('equal')
-fig.colorbar(im)
-plt.show()
-
-
-
-
-
-
