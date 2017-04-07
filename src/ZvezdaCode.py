@@ -88,10 +88,6 @@ dimension = len( autovalores_matriz )
 print "Dimension de los autovalores: " + str(dimension)
 
 
-#Graficamos los autovalores bajo ciertas condiciones
-graph_positive = np.zeros( ( dimension , dimension ) )
-graph_negative = np.zeros( ( dimension , dimension ) )
-graph_diffsp = np.zeros( ( dimension , dimension ) )
 
 b=100
 #Halla los histogramas de cada autovalor
@@ -101,8 +97,15 @@ plt.plot(binsauto1[1:],hist_auto1 )
 plt.plot(binsauto2[1:],hist_auto2 )
 plt.show()
 
-#
+
 def umbra(umbral):
+
+        #Graficamos los autovalores bajo ciertas condiciones
+        graph_positive = np.zeros( ( dimension , dimension ) )
+        graph_negative = np.zeros( ( dimension , dimension ) )
+        graph_diffsp = np.zeros( ( dimension , dimension ) )
+
+        
         for x in range( 0 , dimension ):
 	        for y in range( 0 , dimension ):
 		        if( ( autovalores_matriz[ x , y , 1 ] > umbral ) and ( autovalores_matriz[ x , y , 0 ] > umbral ) ):
@@ -114,25 +117,30 @@ def umbra(umbral):
 		        if( ( autovalores_matriz[ x , y , 1 ] < umbral ) and ( autovalores_matriz[ x , y , 0 ] > umbral ) ):
 			        graph_diffsp[ x , y ] = 1
 
+        return graph_positive,graph_negative,graph_diffsp
+
+
+
 fig, ax=plt.subplots()
-plt.subplots_adjust(left=0.25, bottom=0.25)
+plt.subplots_adjust(left=0.15, bottom=0.25)
 
 umbral = float(input("Umbral posible para la imagen: "))
 ui = float(input("Umbral minimo: "))
 uf = float(input("Umbral maximo: "))
 
-umbra(umbral)
+
+gp,gn,gd=umbra(umbral)
 
 plt.subplot(221)
-g1=plt.imshow( graph_positive , cmap='gray' )
+g1=plt.imshow( gp , cmap='gray' )
 plt.title("$\lambda_{1}$ > $\lambda_{u}$ y $\lambda_{2}$ > $\lambda_{u}$")
 
 plt.subplot(222)
-g2=plt.imshow( graph_negative , cmap='gray' )
+g2=plt.imshow( gn , cmap='gray' )
 plt.title("$\lambda_{1}$ < $\lambda_{u}$ y $\lambda_{2}$ < $\lambda_{u}$")
 
 plt.subplot(223)
-g3=plt.imshow( graph_diffsp , cmap='gray' )
+g3=plt.imshow( gd , cmap='gray' )
 plt.title("$\lambda_{1}$ > $\lambda_{u}$ y $\lambda_{2}$ < $\lambda_{u}$")
 
 plt.subplot(224)
@@ -144,10 +152,10 @@ slu=Slider(axlu,'$\lambda_{u}$',ui,uf,valinit=umbral)
 
 def update(val):
         lu=slu.val
-        umbra(lu)
-        g1.set_data(graph_positive)
-        g2.set_data(graph_negative)
-        g3.set_data(graph_diffsp)
+        g_p,g_n,g_d=umbra(lu)
+        g1.set_data(g_p)
+        g2.set_data(g_n)
+        g3.set_data(g_d)
         fig.canvas.draw_idle()
 slu.on_changed(update)
 
