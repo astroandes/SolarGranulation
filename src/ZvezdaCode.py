@@ -7,7 +7,7 @@ from astropy.io import fits
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-from matplotlib.widgets import Slider
+from matplotlib.widgets import Slider,Button
 
 
 
@@ -17,8 +17,7 @@ def hessiano( matriz ):
         matriz_hessiano = np.zeros((n_side-2,n_side-2,2,2))
         
         matriz_hessiano[0:n_side-2,0:n_side-2,0,0] = matriz[2:n_side,1:n_side-1] -2.0*matriz[1:n_side-1,1:n_side-1] + matriz[0:n_side-2,1:n_side-1]
-        matriz_hessiano[0:n_side-2,0:n_side-2,0,1] = (matriz[2:n_side,2:n_side] - matriz[2:n_side, 0:n_side-2] -                                             
-                                                       matriz[0:n_side-2, 2:n_side] + matriz[0:n_side-2,0:n_side-2])*0.25
+        matriz_hessiano[0:n_side-2,0:n_side-2,0,1] = (matriz[2:n_side,2:n_side] - matriz[2:n_side, 0:n_side-2] - matriz[0:n_side-2, 2:n_side] + matriz[0:n_side-2,0:n_side-2])*0.25
         matriz_hessiano[:,:,1,0] = matriz_hessiano[:,:,0,1]
         matriz_hessiano[0:n_side-2,0:n_side-2,1,1] = matriz[1:n_side-1, 2:n_side] -2.0*matriz[1:n_side-1,1:n_side-1] + matriz[n_side-1, 1:n_side-1]
 	return matriz_hessiano
@@ -38,7 +37,7 @@ def autovalores( matriz_derivadas ):
 
 
 #Guarda los valores de la imagen en una matriz
-hdulist  = fits.open("../data/obs/bbso_tio_pcosr_20130902_162238.fts")
+hdulist  = fits.open("../data/obs/bbso_halph_fl_20130912_231121.fts")
 image_data = hdulist[0].data
 print ""
 print "La imagen ha sido cargada"
@@ -54,7 +53,7 @@ print(image_data.shape)
 print ""
 
 #cortamos el pedazo que necesitamos
-new_image_data = 1.0*image_data[ 1500:-100, 1500:-100 ]
+new_image_data = 1.0*image_data[ 700:-700, 700:-700 ]
 final_image_data = new_image_data[1:-1,1:-1]
 
 
@@ -150,6 +149,7 @@ plt.title("imagen")
 axlu = plt.axes([0.25, 0.1, 0.65, 0.03])
 slu=Slider(axlu,'$\lambda_{u}$',ui,uf,valinit=umbral)
 
+
 def update(val):
         lu=slu.val
         g_p,g_n,g_d=umbra(lu)
@@ -157,6 +157,21 @@ def update(val):
         g2.set_data(g_n)
         g3.set_data(g_d)
         fig.canvas.draw_idle()
+                
 slu.on_changed(update)
 
+saveax=plt.axes([0.8,0.025,0.1,0.04])
+button=Button(saveax,'Save')
+
+def Save(event):
+        nombre=str(input("Nombre de la imagen: "))
+        extent = g3.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+        fig.savefig(nombre+'.pdf', bbox_inches=extent.expanded(1., 1.))
+        ex = g4.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+        fig.savefig(nombre+'original.pdf', bbox_inches=ex.expanded(1., 1.))
+        print "imagen ha sido guardada"
+
+        
+button.on_clicked(Save)     
 plt.show()
+
