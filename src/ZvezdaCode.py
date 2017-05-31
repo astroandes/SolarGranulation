@@ -20,8 +20,7 @@ def hessiano( matriz ):
         matriz_hessiano[0:n_side-2,0:n_side-2,0,1] = (matriz[2:n_side,2:n_side] - matriz[2:n_side, 0:n_side-2] - matriz[0:n_side-2, 2:n_side] + matriz[0:n_side-2,0:n_side-2])*0.25
         matriz_hessiano[:,:,1,0] = matriz_hessiano[:,:,0,1]
         matriz_hessiano[0:n_side-2,0:n_side-2,1,1] = matriz[1:n_side-1, 2:n_side] -2.0*matriz[1:n_side-1,1:n_side-1] + matriz[n_side-1, 1:n_side-1]
-	return matriz_hessiano
-
+        return (matriz_hessiano)
 #Definimos la funcion que calcula y devuelve los autovalores de una matriz
 def autovalores( matriz_derivadas ):
         n_side = np.size(matriz_derivadas[0,:,0,0])
@@ -33,38 +32,38 @@ def autovalores( matriz_derivadas ):
         autovalores_matriz[:,:,0] = 0.5*(traza + np.sqrt(traza**2 - 4.0*determinante))
         autovalores_matriz[:,:,1] = 0.5*(traza - np.sqrt(traza**2 - 4.0*determinante))
 
-	return autovalores_matriz
+        return autovalores_matriz
 
 
 #Guarda los valores de la imagen en una matriz
-hdulist  = fits.open("../data/obs/bbso_halph_fl_20130912_231121.fts")
+hdulist  = fits.open("../data/bbso_tio_pcosr_20120726_171242.fts")
 image_data = hdulist[0].data
-print ""
-print "La imagen ha sido cargada"
+print ("")
+print ("La imagen ha sido cargada")
 
 
 #Imprime informacion de la imagen que se cargo
-print ""
-print "Informacion de la imagen:"
-print ""
-print hdulist.info()
-print ""
+print ("")
+print ("Informacion de la imagen:")
+print ("")
+print (hdulist.info())
+print ("")
 print(image_data.shape)
-print ""
+print ("")
 
 #cortamos el pedazo que necesitamos
-new_image_data = 1.0*image_data[ 700:-700, 700:-700 ]
+new_image_data = 1.0*image_data[ 500:-500, 500:-500 ]
 final_image_data = new_image_data[1:-1,1:-1]
 
 
 #Calculamos la matriz asociada al algoritmo
 derivada_matriz = hessiano(new_image_data)
-print "La derivada ha sido calculada"
+print ("La derivada ha sido calculada")
 
 
 autovalores_matriz = autovalores(derivada_matriz);
-print "los autovectores han sido calculados"
-print ""
+print ("los autovectores han sido calculados")
+print ("")
 
 plt.figure(figsize=(15,10))
 plt.subplot(131)
@@ -84,17 +83,14 @@ plt.show()
 
 
 dimension = len( autovalores_matriz )
-print "Dimension de los autovalores: " + str(dimension)
+print ("Dimension de los autovalores: " + str(dimension))
 
 
 
 b=100
-#Halla los histogramas de cada autovalor
-hist_auto1,binsauto1 = np.histogram( autovalores_matriz[:,:,0] , bins = b )
-hist_auto2,binsauto2 = np.histogram( autovalores_matriz[:,:,1] , bins = b )
-plt.plot(binsauto1[1:],hist_auto1 )
-plt.plot(binsauto2[1:],hist_auto2 )
-plt.show()
+des=np.std(autovalores_matriz[:,:,0])
+print ('Desviacion estandar datos es '+str(des))
+
 
 
 def umbra(umbral):
@@ -123,16 +119,16 @@ def umbra(umbral):
 fig, ax=plt.subplots()
 plt.subplots_adjust(left=0.15, bottom=0.25)
 
-umbral = float(input("Umbral posible para la imagen: "))
-ui = float(input("Umbral minimo: "))
-uf = float(input("Umbral maximo: "))
+umbral = des*3./4.
+ui = des/4.
+uf = des*5./4.
 
 
 gp,gn,gd=umbra(umbral)
 
 plt.subplot(221)
-g1=plt.imshow( gp , cmap='gray' )
-plt.title("$\lambda_{1}$ > $\lambda_{u}$ y $\lambda_{2}$ > $\lambda_{u}$")
+g1=plt.imshow( autovalores_matriz[:,:,0] , cmap='gray' )
+plt.title("First eingevalues")
 
 plt.subplot(222)
 g2=plt.imshow( gn , cmap='gray' )
@@ -153,7 +149,6 @@ slu=Slider(axlu,'$\lambda_{u}$',ui,uf,valinit=umbral)
 def update(val):
         lu=slu.val
         g_p,g_n,g_d=umbra(lu)
-        g1.set_data(g_p)
         g2.set_data(g_n)
         g3.set_data(g_d)
         fig.canvas.draw_idle()
@@ -169,7 +164,7 @@ def Save(event):
         fig.savefig(nombre+'.pdf', bbox_inches=extent.expanded(1., 1.))
         ex = g4.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
         fig.savefig(nombre+'original.pdf', bbox_inches=ex.expanded(1., 1.))
-        print "imagen ha sido guardada"
+        print ("imagen ha sido guardada")
 
         
 button.on_clicked(Save)     
